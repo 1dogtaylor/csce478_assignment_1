@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 
 
 from data import readDataLabels, normalize_data, train_test_split, to_categorical
-from utils import accuracy_score
-
+from utils import accuracy_score, MSELoss, CrossEntropyLoss, ReLUActivation, SigmoidActivation, SoftmaxActivation
 # Create an MLP with 8 neurons
 # Input -> Hidden Layer -> Output Layer -> Output
 # Neuron = f(w.x + b)
@@ -15,7 +14,7 @@ from utils import accuracy_score
 mode = 'train'      # train/test... Optional mode to avoid training incase you want to load saved model and test only.
 
 class ANN:
-    def __init__(self, num_input_features, num_hidden_units, num_outputs, hidden_unit_activation, output_activation, loss_function='mse'):
+    def __init__(self, num_input_features, num_hidden_units, num_outputs, hidden_unit_activation = ReLUActivation, output_activation = SoftmaxActivation, loss_function=MSELoss):
         self.num_input_features = num_input_features
         self.num_hidden_units = num_hidden_units # looks like (100,100,100) for 3 hidden layers with 100 neurons each
         self.num_outputs = num_outputs
@@ -56,17 +55,17 @@ class ANN:
 
     def forward(self, X):      # TODO
         
-        for i in range(self.num_hidden_units+1):
+        for i in range(len(self.num_hidden_unit)+2):
             weights = self.weights[i]
             biases = self.biases[i]
 
             
             Y = np.dot(weights, X) + biases
-            if i == self.num_hidden_units:
+            if i == len(self.num_hidden_units)+1:
                 Y = self.output_activation(Y)
             else:
                 Y = self.hidden_unit_activation(Y)
-            return Y
+        return Y
         
         # x = input matrix
         # hidden activation y = f(z), where z = w.x + b
@@ -74,13 +73,11 @@ class ANN:
         # Trick here is not to think in terms of one neuron at a time
         # Rather think in terms of matrices where each 'element' represents a neuron
         # and a layer operation is carried out as a matrix operation corresponding to all neurons of the layer
-    def mse(self, y_pred, y, num_samples=1):
-        loss = (1/2*num_samples) * np.sum((y_pred - y)**2)
-        return loss
+    
     
     def backward(self):     # TODO
         pass
-        grad_loss = []
+        grad_loss = np.asarray()
         return grad_loss
 
     def update_params(self,learning_rate, grad_loss):    # TODO
@@ -134,7 +131,8 @@ def main(argv):
     X_label = []
     for i in range(0, len(normalized_train_data), 100):
         mini_batch = (normalized_train_data[i:i+100], categorical_train_labels[i:i+100])
-        X_data,X_label = (X_data,X_label).append(mini_batch)
+        X_data.append(mini_batch[0])
+        X_label.append(mini_batch[1])
     X = (X_data,X_label)
     Y = (normalized_test_data, categorical_test_labels)
 
