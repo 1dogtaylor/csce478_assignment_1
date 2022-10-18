@@ -16,56 +16,41 @@ mode = 'train'      # train/test... Optional mode to avoid training incase you w
 class ANN:
     def __init__(self, num_input_features, num_hidden_units, num_outputs, hidden_unit_activation = ReLUActivation, output_activation = SoftmaxActivation, loss_function=MSELoss):
         self.num_input_features = num_input_features
-        self.num_hidden_units = num_hidden_units # looks like (100,100,100) for 3 hidden layers with 100 neurons each
+        self.num_hidden_units = num_hidden_units 
         self.num_outputs = num_outputs
 
         self.hidden_unit_activation = hidden_unit_activation
         self.output_activation = output_activation
         self.loss_function = loss_function
+
+        self.hidden_layer = None
+        self.output_layer = None
         self.weights = []
         self.biases = []
 
         self.initialize_weights()
 
-# 64 (100,100,100) 10
+# 64 16 10
     def initialize_weights(self):   # TODO
        
-        for i in range(1, len(self.num_hidden_units)+2):
-        
-
-            if i == 1:
-                previous_layer_size = self.num_input_features
-                current_layer_size = self.num_hidden_units[0]
-            
-            elif i == len(self.num_hidden_units)+1:
-                previous_layer_size = self.num_hidden_units[-1]
-                current_layer_size = self.num_outputs
-            
-            else:
-                previous_layer_size = self.num_hidden_units[i-2]
-                current_layer_size = self.num_hidden_units[i-1]
-
-        
-            weights = np.random.uniform(previous_layer_size, current_layer_size) # initialize weights randomly using a uniform distribution
-            biases = np.random.uniform(1, current_layer_size) # initialize biases randomly using a uniform distribution
-            self.weights.append(weights)
-            self.biases.append(biases)
+        self.weights.append(np.random.uniform(self.num_hidden_units, self.num_input_features))
+        self.weights.append(np.random.uniform(self.num_outputs, self.num_hidden_units))
+        self.biases.append(np.random.uniform(self.num_hidden_units, 1))
+        self.biases.append(np.random.uniform(self.num_outputs, 1))
+        # weight dimensions = (next layer, input to current layer)
+        # bias dimensions = (next layer, 1)
         
         return 
 
     def forward(self, X):      # TODO
-        
-        for i in range(len(self.num_hidden_unit)+2):
-            weights = self.weights[i]
-            biases = self.biases[i]
+        self.z1 = np.dot(self.weights[0], X) + self.biases[0] # 16x64 * 64x1 + 16x1 = 16x1 and X is flattened 8x8 image
+        self.hidden_layer = self.hidden_unit_activation(self.z1)
+        self.z2 = np.dot(self.weights[1], self.hidden_layer) + self.biases[1] # 10x16 * 16x1 + 10x1 = 10x1
+        self.output_layer = self.output_activation(self.z2)
 
-            
-            Y = np.dot(weights, X) + biases
-            if i == len(self.num_hidden_units)+1:
-                Y = self.output_activation(Y)
-            else:
-                Y = self.hidden_unit_activation(Y)
-        return Y
+        return self.output_layer
+        
+       
         
         # x = input matrix
         # hidden activation y = f(z), where z = w.x + b
@@ -75,9 +60,21 @@ class ANN:
         # and a layer operation is carried out as a matrix operation corresponding to all neurons of the layer
     
     
-    def backward(self):     # TODO
+    def backward(self,errors):     # TODO
+        
+        
         pass
-        grad_loss = np.asarray()
+        grad_cross_entropy = np.asarray() # dl/dy_pred
+
+        #put in the softmax derivative to give us grad_z1
+        grad_z2 = np.asarray() # dy_pred/dz2
+
+        #put in the sigmoid derivative this gives us grad z
+        grad_z1 = np.asarray() # dz2/dz1
+
+        grad_z = np.asarray() # dz1/dz
+        
+
         return grad_loss
 
     def update_params(self,learning_rate, grad_loss):    # TODO
@@ -99,11 +96,11 @@ class ANN:
                     x = x.flatten()
                     y_pred = self.forward(x)
 
-                    error = self.loss_function(y_pred, y)
-                    errors.append(error)
+                    error = self.loss_function.__call__(y_pred, y)
+                    errors = np.sum(error,errors)
                     # Backward pass
                     # Update weights and biases
-                    grad_loss = self.backward()
+                    grad_loss = self.backward(errors)
                     self.update_params(learning_rate, grad_loss)
                 print("Epoch: {}, Loss: {}".format(epoch, np.mean(errors)))
     def test(self, test_dataset):

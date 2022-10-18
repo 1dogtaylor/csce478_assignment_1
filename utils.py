@@ -41,7 +41,7 @@ class CrossEntropyLoss:     # TODO: Make this work!!!
         loss = None
         return loss
 
-    def grad(self):
+    def grad(self,errors, y_pred):
         # TODO: Calculate Gradients for back propagation
         gradient = None
         return gradient
@@ -57,6 +57,8 @@ class SoftmaxActivation:    # TODO: Make this work!!!
 
     def __grad__(self):
         # TODO: Calculate Gradients.. Remember this is calculated w.r.t. input to the function -> dy/dz
+        # input the output of the gradient function of the loss function
+        # dL/dz2 = dL/dy2 * dy2/dz2
         pass
 
 
