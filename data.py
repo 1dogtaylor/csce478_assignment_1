@@ -37,8 +37,8 @@ def train_test_split(data,labels,n=0.8): #TODO
 def normalize_data(data): #TODO
 
 	x = data
-	x = x.astype('float32')
-	x /= 255
+	xnorm = (x - np.amin(x)) / (np.amax(x) - np.amin(x))
+	
 	# normalize/standardize the data
 
-	return x
+	return xnorm

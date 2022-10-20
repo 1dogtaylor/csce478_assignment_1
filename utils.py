@@ -31,48 +31,63 @@ class MSELoss:      # For Reference
 
 class CrossEntropyLoss:     # TODO: Make this work!!!
     def __init__(self):
-        # Buffers to store intermediate results.
         self.current_prediction = None
         self.current_gt = None
         pass
 
     def __call__(self, y_pred, y_gt):
-        # TODO: Calculate Loss Function
-        loss = None
+        
+        m = 10
+        for i in range(m):
+            self.current_prediction = y_pred[i]
+            self.current_gt = y_gt[i]
+            if self.current_gt == 1:
+                break
+                
+        loss = min(10^5,(-1 * np.sum(self.current_gt * np.log(self.current_prediction))))
+          
         return loss
 
-    def grad(self,errors, y_pred):
-        # TODO: Calculate Gradients for back propagation
-        gradient = None
+    def grad(self, y_pred):
+        gradient = y_pred - 1 # 1 = ground truth
+        #wrong
         return gradient
 
 
 class SoftmaxActivation:    # TODO: Make this work!!!
     def __init__(self):
+        self.y = None
         pass
 
     def __call__(self, y):
         # TODO: Calculate Activation Function
-        pass
+        self.y = y
+        exp_y = np.exp(y)
+        sum = exp_y.sum()
+        return (exp_y / sum)
 
-    def __grad__(self):
-        # TODO: Calculate Gradients.. Remember this is calculated w.r.t. input to the function -> dy/dz
-        # input the output of the gradient function of the loss function
-        # dL/dz2 = dL/dy2 * dy2/dz2
-        pass
+    def __grad__(self, y):
+        for i in range(len(y)):
+            y[i] = y[i] * (1 - y[i])
+        #maybe incorrect
+        return y
+        
 
 
 class SigmoidActivation:    # TODO: Make this work!!!
     def __init__(self):
+        self.y = None
         pass
 
-    def __call__(self, y):
+    def __call__(self,y):
         # TODO: Calculate Activation Function
-        pass
+        self.y = y
+        y = 1 / (1 + np.exp(-y))
+        return y
 
-    def __grad__(self):
-        # TODO: Calculate Gradients.. Remember this is calculated w.r.t. input to the function -> dy/dz
-        pass
+    def __grad__(self,y):
+        grad = (1/(1+np.exp(y))) * (1 - (1/(1+np.exp(y))))
+        return grad
 
 
 class ReLUActivation:
