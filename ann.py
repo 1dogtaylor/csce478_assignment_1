@@ -36,10 +36,10 @@ class ANN:
 # 64 16 10
     def initialize_weights(self):   # TODO
        
-        self.weights.append(np.random.uniform(20,size=(self.num_hidden_units, self.num_input_features)))
-        self.weights.append(np.random.uniform(20,size=(self.num_outputs, self.num_hidden_units)))
-        self.biases.append(np.random.uniform(20,size=(self.num_hidden_units)))
-        self.biases.append(np.random.uniform(20,size=(self.num_outputs)))
+        self.weights.append(np.random.uniform(.5,size=(self.num_hidden_units, self.num_input_features)))
+        self.weights.append(np.random.uniform(.5,size=(self.num_outputs, self.num_hidden_units)))
+        self.biases.append(np.random.uniform(.5,size=(self.num_hidden_units)))
+        self.biases.append(np.random.uniform(.5,size=(self.num_outputs)))
         # weight dimensions = (next layer, input to current layer)
         # bias dimensions = (next layer, 1)
         
@@ -49,30 +49,24 @@ class ANN:
         
         if count == 0:
         
-            self.X = X
-            self.z1.append(([np.dot(self.weights[0], X) + self.biases[0]]))# 16x64 * 64x1 + 16x1 = 16x1 and X is flattened 8x8 image
-            self.hidden_layer = self.hidden_unit_activation().__call__(np.asarray(self.z1[0]))
-            self.z2 = np.asarray((np.dot(self.weights[1], self.hidden_layer) + self.biases[1]))# 10x16 * 16x1 + 10x1 = 10x1
-            self.output_layer = self.output_activation().__call__(self.z2)
-
+        
+            
+            self.z1.append(((np.dot(self.weights[0], X)) + self.biases[0]))# 16x64 * 64x1 + 16x1 = 16x1 and X is flattened 8x8 image
+            self.hidden_layer = self.hidden_unit_activation().__call__(self.z1[0]) # 16x1
+            self.z2.append(((np.dot(self.weights[1], self.hidden_layer)) + self.biases[1]))# 10x16 * T(1x16) + 10x1 = 10x1
+            self.output_layer = self.output_activation().__call__(self.z2[0]) # 10x1
             return self.output_layer
         else:
-            self.X = np.append(self.X,X,axis=1)
-            self.z1 = np.append(self.z1,np.dot(self.weights[0], X) + self.biases[0]) # 16x64 * 64x1 + 16x1 = 16x1 and X is flattened 8x8 image
+            
+            self.z1.append(((np.dot(self.weights[0], X)) + self.biases[0])) # 16x64 * 64x1 + 16x1 = 16x1 and X is flattened 8x8 image
             self.hidden_layer = self.hidden_unit_activation().__call__(np.asarray(self.z1[count]))
-            self.z2 = np.append((self.z2,np.dot(self.weights[1], self.hidden_layer) + self.biases[1])) # 10x16 * 16x1 + 10x1 = 10x1
+            self.z2.append(((np.dot(self.weights[1], self.hidden_layer)) + self.biases[1])) # 10x16 * 16x1 + 10x1 = 10x1
             self.output_layer = self.output_activation().__call__(self.z2[count])
-
             return self.output_layer
         
        
         
-        # x = input matrix
-        # hidden activation y = f(z), where z = w.x + b
-        # output = g(z'), where z' =  w'.y + b'
-        # Trick here is not to think in terms of one neuron at a time
-        # Rather think in terms of matrices where each 'element' represents a neuron
-        # and a layer operation is carried out as a matrix operation corresponding to all neurons of the layer
+       
     
     
     def backward(self,y_pred):     # TODO
@@ -87,7 +81,7 @@ class ANN:
 
         grad_cross_entropy = self.loss_function().grad(y_pred) 
         grad_soft_max = self.output_activation().__grad__(self.z2) 
-        del_L_del_z2 = np.dot(np.atleast_2d(grad_cross_entropy).T, np.atleast_2d(grad_soft_max)) #10X10
+        del_L=del_z2 = np.dot(np.atleast_2d(grad_cross_entropy).T, np.atleast_2d(grad_soft_max)) #10X10
         del_L_del_z2 = np.sum(del_L_del_z2, axis=1) #1X10
         del_L_del_w2 = np.dot(np.atleast_2d(del_L_del_z2).T, np.atleast_2d(self.hidden_layer)) #10X16
         del_L_del_b2 = del_L_del_z2
@@ -115,27 +109,29 @@ class ANN:
             y_pred = []
             errors = 0
             #mini_batch
-            for i in range(len(dataset[0])):
-                X = dataset[0][i] #10 images
-                Y = dataset[1][i] #10 labels each 10 elements
-                count = 0
-                for x,y in zip(X,Y):
-                    x = np.asarray(x)
-                    y = np.asarray(y)
+            X = dataset[0] #10 images
+            Y = dataset[1] #10 labels each 10 elements
+            count = 0
+            for x,y in zip(X,Y):
+                x = np.asarray(x)
+                y = np.asarray(y)
                   
-                    x = x.flatten()
-                    
-                    y_pred = self.forward(x,count)
-                    error = self.loss_function().__call__(y_pred, y)
-                    errors = (error + errors)
-                    count = count + 1
-                    
-                ave_error = errors/len(X) #average error for each mini batch
+                x = x.flatten()
                 
-                del_L_del_w2 , del_L_del_b2, del_l_del_w1, del_l_del_b1 = self.backward(y_pred) # Backward pass
-                self.update_params(learning_rate, del_L_del_w2 , del_L_del_b2, del_l_del_w1, del_l_del_b1) # Update weights and biases
 
-                print("Epoch: {}, Loss: {}".format(epoch, np.nan_to_num(ave_error)))
+                y_pred = self.forward(x,count)
+                error = self.loss_function().__call__(y_pred, y)
+                errors = (error + errors)
+                count = count + 1
+                    
+            ave_error = errors/len(X) #average error for each epoch
+
+            
+                
+            #del_L_del_w2 , del_L_del_b2, del_l_del_w1, del_l_del_b1 = self.backward(y_pred) # Backward pass
+            #self.update_params(learning_rate, del_L_del_w2 , del_L_del_b2, del_l_del_w1, del_l_del_b1) # Update weights and biases
+
+            print("Epoch: {}, Ave Loss: {}".format(epoch, np.nan_to_num(ave_error)))
 
 
 
@@ -161,13 +157,9 @@ def main(argv):
     categorical_train_labels = to_categorical(train_labels)
     categorical_test_labels = to_categorical(test_labels)
     #mini_batch
-    X_data = []
-    X_label = []
-    for i in range(0, len(normalized_train_data), 500):
-        mini_batch = (normalized_train_data[i:i+500], categorical_train_labels[i:i+500])
-        X_data.append(mini_batch[0])
-        X_label.append(mini_batch[1])
-    X = (X_data,X_label)
+
+
+    X = (normalized_train_data,categorical_train_labels)
     Y = (normalized_test_data, categorical_test_labels)
 
     #dataset[0] = training data, dataset[1] = training labels, dataset[2] = testing data, dataset[3] = testing labels
